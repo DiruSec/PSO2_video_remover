@@ -5,7 +5,19 @@ import re
 import sys
 import os
 import shutil
+import locale
 from datetime import datetime as dt
+
+validLang = ["en","cn","ja"]
+currentLang = locale.getdefaultlocale()[0].lower()
+for lang in validLang:
+    try:
+        currentLang.index(lang)
+        currentLang = lang
+    except:
+        pass
+if (len(currentLang)>2):
+    currentLang = 'en'
 
 langString = {
     "en": {
@@ -25,7 +37,28 @@ langString = {
         "sizeResult": "Total size: %s KiB.",
         "listNotEnough": "Patchlist seems corrupted. Try re-download patchlist.\nIf still dosen't work, it might be a bug.",
         "notDetected": "Did not detected any dummy file.",
-        "checkMDayDiff": "How many days that files created before today should not be deleted? (Default: 30）\n※If you don't know the meaning, press Enter."
+        "checkMDayDiff": "How many days that files created before should not be deleted? (Default: 30）\n※If you don't know the meaning, press Enter. ",
+        "pressContinue": "Press Enter to continue ..."
+    },
+    "ja": {
+        "checkVer": "ゲームバージョンをチェックしています…",
+        "failLoadPatchList": "Patchlist の読み込みが失敗しました。",
+        "checkCache": "キャッシュをチェックしています…",
+        "useCache": "有効なキャッシュが存在しています。キャッシュを使用しますか？ (Y/n)",
+        "parseList": "Patchlist を分析しています…",
+        "readDict": "データフォルダーをチェックしています…",
+        "manualPath": "データフォルダーを認識できません。手動でゲームのインストール先を入力しますか？ (y/N)",
+        "manualPath2": "ゲームのインストール先を入力してください。インストール先は 'pso2_bin' というフォルダーを含まれています。\n例：'D:\\PHANTASYSTARONLINE2'",
+        "downloadList": "Patchlist をダウンロードしています…",
+        "readCache": "キャッシュから patchlist を読み込みしています。",
+        "movingFile": "ファイル：%s、サイズ： %s KiB",
+        "removeFile": "%s を削除しています…",
+        "moveResult": "%s 件のファイルを検出しました。",
+        "sizeResult": "合計サイズ： %s KiB.",
+        "listNotEnough": "Patchlist が破損してるようです。再ダウンロードを試してください。\n相変わらずダメの場合は、バグが起きてるかもしれません。",
+        "notDetected": "動画ファイルを検出してませんでした。",
+        "checkMDayDiff": "日数を入力してください。期間中にダウンロードしたファイルは削除されません。(デフォルト: 30）\n※意味がわからないの場合は、Enter を押してください。 ",
+        "pressContinue": "続行するには Enter キーを押してください…"
     },
     "cn": {
         "checkVer": "正在检测游戏版本…",
@@ -45,10 +78,11 @@ langString = {
         "deleteConfirm": "立即删除上述文件吗？(y/N)",
         "listNotEnough": "Patchlist 文件似乎损坏了。请尝试重新下载。\n若仍然不行，可能是出现了一个 Bug。",
         "notDetected": "没有检测到任何无用文件。",
-        "checkMDayDiff": "请输入一个天数。距现在一定天数内的文件不会被删除。（默认：30）\n※如果你不知道这有什么用，请直接回车。"
+        "checkMDayDiff": "请输入一个天数。距现在一定天数内的文件不会被删除。（默认：30）\n※如果你不知道这有什么用，请直接回车。 ",
+        "pressContinue": "按回车键继续…"
     }
 }
-print (langString["cn"]["checkVer"])
+print (langString[currentLang]["checkVer"])
 try:
     req = urllib.request.urlopen(
         urllib.request.Request(
@@ -62,12 +96,13 @@ try:
     regexp = re.compile(r"PatchURL=(.*)(?:\r)")
     patchlist = re.findall(regexp, MFile)[0] + "patchlist.txt"
 except:
-    print (langString["cn"]["failLoadPatchList"])
+    print (langString[currentLang]["failLoadPatchList"])
+    input(langString[currentLang]["pressContinue"])
     sys.exit()
 
 def downloadList():
     global PFile
-    print (langString["cn"]["downloadList"])
+    print (langString[currentLang]["downloadList"])
     downloadReq = urllib.request.urlopen(
         urllib.request.Request(
         url=patchlist,
@@ -84,12 +119,12 @@ def downloadList():
 
 def readCacheList():
     global PFile
-    print (langString["cn"]["readCache"])
+    print (langString[currentLang]["readCache"])
     with open("cachelist.txt",'r') as f2:
         PFile = f2.read()
 
 
-print (langString["cn"]["checkCache"])
+print (langString[currentLang]["checkCache"])
 PFile = ''
 try:
     with open("cachelist.txt",'r') as f:
@@ -97,8 +132,7 @@ try:
         withrep = re.compile(r"PatchURL=(.*)")
         cachelist = re.findall(withrep, CFile)[0]
         if (cachelist == patchlist):
-            print (langString["cn"]["useCache"])
-            useC = input().lower()
+            useC = input(langString[currentLang]["useCache"]).lower()
 
             if (useC == 'n'):
                 downloadList()
@@ -109,28 +143,34 @@ try:
 except:
     downloadList()
 
-print (langString["cn"]["parseList"])
+print (langString[currentLang]["parseList"])
 regexp = re.compile(r"data/win32/(.{32})\.pat")
 filelist = re.findall(regexp, PFile)
 
 # 完整性检测
 if (len(filelist) < 60000):
-    print (langString["cn"]["listNotEnough"])
-    input()
+    print (langString[currentLang]["listNotEnough"])
+    input(langString[currentLang]["pressContinue"])
     sys.exit()
 
+try:
+    mdaydiff = int(input(langString[currentLang]["checkMDayDiff"]))
+    if (mdaydiff <= 0):
+        mdaydiff = 0
+except:
+    mdaydiff = 30
+
 def definePath(inputpath):
-    print (langString["cn"]["readDict"])
+    print (langString[currentLang]["readDict"])
     global files
     global path
     try:
         path = inputpath + "\\pso2_bin\\data\\win32"
         files = os.listdir(path)
     except:
-        print (langString["cn"]["manualPath"])
-        pathC = input().lower()
+        pathC = input(langString[currentLang]["manualPath"]).lower()
         if (pathC == 'y'):
-            print (langString["cn"]["manualPath2"])
+            print (langString[currentLang]["manualPath2"])
             pathG = input()
             definePath(pathG)
         else:
@@ -143,14 +183,6 @@ totalsize = 0
 deleteArray = []
 dateNow = dt.now()
 
-print (langString["cn"]["checkMDayDiff"])
-try:
-    mdaydiff = int(input())
-    if (mdaydiff <= 0):
-        mdaydiff = 0
-except:
-    mdaydiff = 30
-
 for index in files:
     if (index not in filelist and len(index)== 32):
         file = path+'\\'+index
@@ -159,17 +191,18 @@ for index in files:
             size = os.stat(file).st_size
             totalsize = totalsize + size
             deleteArray.append(index)
-            print (langString["cn"]["movingFile"]%(index,str(round(size/1024))))
+            print (langString[currentLang]["movingFile"]%(index,str(round(size/1024))))
 
 if (len(deleteArray) == 0 or len(deleteArray) > 10000):
-    print (langString["cn"]["notDetected"])
+    print (langString[currentLang]["notDetected"])
+    input(langString[currentLang]["pressContinue"])
     sys.exit()
 
-print (langString["cn"]["moveResult"]%len(deleteArray))
-print (langString["cn"]["sizeResult"]%str(round(totalsize/1024)))
-print (langString["cn"]["deleteConfirm"])
-ConfD = input().lower()
+print (langString[currentLang]["moveResult"]%len(deleteArray))
+print (langString[currentLang]["sizeResult"]%str(round(totalsize/1024)))
+ConfD = input(print (langString[currentLang]["deleteConfirm"])).lower()
 if (ConfD == 'y'):
     for index in deleteArray:
-        print (langString["cn"]["removeFile"]%index)
+        print (langString[currentLang]["removeFile"]%index)
         os.remove(path+'\\'+index)
+input(langString[currentLang]["pressContinue"])
