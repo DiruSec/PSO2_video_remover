@@ -202,7 +202,7 @@ if (len(deleteArray) == 0 or len(deleteArray) > 10000):
 
 print (langString[currentLang]["moveResult"]%len(deleteArray))
 print (langString[currentLang]["sizeResult"]%str(round(totalsize/1024)))
-ConfD = input(print (langString[currentLang]["deleteConfirm"])).lower()
+ConfD = input(langString[currentLang]["deleteConfirm"]).lower()
 if (ConfD == 'y'):
     for index in deleteArray:
         print (langString[currentLang]["removeFile"]%index)
